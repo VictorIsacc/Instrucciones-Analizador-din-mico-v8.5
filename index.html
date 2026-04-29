@@ -1,0 +1,810 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Analizador Dinámico 6/49 V8.5 HARD — Manual ilustrado</title>
+<style>
+:root{
+  --bg:#071120;
+  --panel:#0b1730;
+  --panel2:#0e1d3d;
+  --soft:#12254a;
+  --text:#e8eefc;
+  --muted:#a7b6d9;
+  --line:#29406f;
+  --cyan:#31d4ff;
+  --blue:#4f7cff;
+  --green:#7ee787;
+  --yellow:#f9c74f;
+  --orange:#ff9f43;
+  --red:#ff6b6b;
+  --purple:#b58cff;
+  --shadow: 0 18px 40px rgba(0,0,0,.32);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:
+    radial-gradient(circle at top right, rgba(79,124,255,.16), transparent 28%),
+    radial-gradient(circle at left top, rgba(49,212,255,.10), transparent 20%),
+    linear-gradient(180deg, #06101d 0%, #081325 100%);
+  color:var(--text);
+  font:16px/1.55 "Segoe UI", system-ui, Arial, sans-serif;
+}
+a{color:var(--cyan);text-decoration:none}
+a:hover{text-decoration:underline}
+.wrap{
+  width:min(1400px, calc(100% - 32px));
+  margin:0 auto;
+}
+.hero{
+  padding:34px 0 22px;
+}
+.hero-box{
+  display:grid;
+  grid-template-columns: 1.2fr .8fr;
+  gap:24px;
+  background:linear-gradient(180deg, rgba(15,27,58,.92), rgba(11,22,46,.92));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.hero-copy{padding:32px}
+.eyebrow{
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  background:rgba(49,212,255,.10);
+  border:1px solid rgba(49,212,255,.24);
+  color:#bff5ff;
+  padding:8px 12px;
+  border-radius:999px;
+  font-weight:700;
+  letter-spacing:.02em;
+}
+h1{
+  font-size:clamp(28px, 4vw, 44px);
+  line-height:1.1;
+  margin:16px 0 14px;
+}
+.sub{
+  color:var(--muted);
+  font-size:18px;
+  max-width:70ch;
+}
+.badges{
+  display:flex;flex-wrap:wrap;gap:10px;margin-top:18px
+}
+.badge{
+  padding:7px 10px;border-radius:12px;font-size:13px;font-weight:700;
+  border:1px solid rgba(255,255,255,.08);
+  background:rgba(255,255,255,.04);
+}
+.hero-art{
+  position:relative;
+  min-height:320px;
+  background:
+    radial-gradient(circle at 65% 22%, rgba(49,212,255,.22), transparent 20%),
+    radial-gradient(circle at 18% 80%, rgba(181,140,255,.18), transparent 22%),
+    linear-gradient(180deg, rgba(9,18,40,.4), rgba(8,15,30,.1));
+  display:flex;align-items:center;justify-content:center;
+}
+.layout{
+  display:grid;
+  grid-template-columns:300px minmax(0,1fr);
+  gap:24px;
+  padding:22px 0 40px;
+}
+.toc{
+  position:sticky; top:16px; align-self:start;
+  background:linear-gradient(180deg, rgba(11,23,48,.95), rgba(10,19,40,.95));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+  box-shadow:var(--shadow);
+  padding:18px;
+  max-height:calc(100vh - 32px);
+  overflow:auto;
+}
+.toc h3{margin:4px 0 12px;font-size:18px}
+.toc ol{margin:0;padding-left:20px}
+.toc li{margin:8px 0;color:var(--muted)}
+.toc .small{font-size:13px;color:var(--muted)}
+.content section{
+  background:linear-gradient(180deg, rgba(11,23,48,.92), rgba(10,19,40,.92));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:22px;
+  box-shadow:var(--shadow);
+  padding:24px;
+  margin-bottom:22px;
+}
+.content h2{
+  display:flex;align-items:center;gap:12px;
+  margin:0 0 14px;
+  font-size:28px;
+}
+.content h3{margin:24px 0 10px;font-size:22px}
+.content h4{margin:16px 0 8px;font-size:18px}
+.content p{margin:10px 0;color:#dae5ff}
+.content ul{margin:10px 0 10px 20px}
+.content li{margin:6px 0;color:#d7e1f7}
+.grid-2, .grid-3, .grid-4{
+  display:grid; gap:16px;
+}
+.grid-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.grid-3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.grid-4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.card{
+  background:linear-gradient(180deg, rgba(17,35,73,.9), rgba(12,26,54,.9));
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:16px;
+}
+.card h4, .card h5{margin:0 0 8px}
+.kpi{
+  font-size:30px;font-weight:800;line-height:1;margin-bottom:8px
+}
+.callout{
+  border-left:4px solid var(--cyan);
+  background:rgba(49,212,255,.07);
+  padding:14px 16px;border-radius:14px;
+  margin:14px 0;
+}
+.tip{border-left-color:var(--green); background:rgba(126,231,135,.08)}
+.warn{border-left-color:var(--yellow); background:rgba(249,199,79,.08)}
+.danger{border-left-color:var(--red); background:rgba(255,107,107,.09)}
+.table-wrap{
+  overflow:auto; border-radius:16px; border:1px solid rgba(255,255,255,.08);
+}
+table{
+  width:100%; border-collapse:collapse; min-width:720px;
+  background:rgba(255,255,255,.02);
+}
+th,td{padding:12px 14px; border-bottom:1px solid rgba(255,255,255,.06); vertical-align:top}
+th{
+  text-align:left; background:rgba(255,255,255,.04); font-size:14px; color:#dff1ff;
+  position:sticky; top:0;
+}
+td{color:#d7e2fb}
+.muted{color:var(--muted)}
+.tag{
+  display:inline-block; padding:4px 8px; border-radius:999px; font-size:12px;
+  background:rgba(255,255,255,.08); color:#fff; border:1px solid rgba(255,255,255,.08)
+}
+.tag.blue{background:rgba(79,124,255,.18)}
+.tag.cyan{background:rgba(49,212,255,.16)}
+.tag.green{background:rgba(126,231,135,.14)}
+.tag.orange{background:rgba(255,159,67,.14)}
+.tag.red{background:rgba(255,107,107,.14)}
+.tag.purple{background:rgba(181,140,255,.18)}
+.code{
+  font-family:Consolas, "Courier New", monospace;
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:10px; padding:3px 8px;
+}
+.footer{
+  color:var(--muted); font-size:14px; text-align:center; padding:16px 0 30px;
+}
+.mini-svg{width:100%; height:auto; display:block}
+svg text{font-family:"Segoe UI", Arial, sans-serif}
+@media (max-width:1100px){
+  .hero-box{grid-template-columns:1fr}
+  .layout{grid-template-columns:1fr}
+  .toc{position:relative; top:0; max-height:none}
+}
+@media (max-width:800px){
+  .grid-2, .grid-3, .grid-4{grid-template-columns:1fr}
+  .wrap{width:min(100% - 20px, 100%)}
+  .content section{padding:18px}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="hero">
+    <div class="hero-box">
+      <div class="hero-copy">
+        <div class="eyebrow">
+          <span>🧠</span>
+          <span>Manual ilustrado · V8.5 HARD</span>
+        </div>
+        <h1>Analizador Dinámico 6/49<br>V8.5 HARD</h1>
+        <p class="sub">
+          Versión ilustrada del manual, centrada en las virtudes del analizador y en el significado práctico
+          de cada casilla de configuración, especialmente dentro de la pestaña <strong>“Tipo de combinaciones a buscar”</strong>.
+        </p>
+        <div class="badges">
+          <span class="badge">Sumas de parejas internas</span>
+          <span class="badge">DR9 de sumas</span>
+          <span class="badge">Firma p-ádica</span>
+          <span class="badge">Eliminación HARD opcional</span>
+          <span class="badge">CPU multiproceso</span>
+          <span class="badge">Backtesting</span>
+        </div>
+      </div>
+      <div class="hero-art" aria-hidden="true">
+        <svg viewBox="0 0 560 360" class="mini-svg">
+          <defs>
+            <linearGradient id="g1" x1="0" x2="1">
+              <stop offset="0%" stop-color="#4f7cff"/>
+              <stop offset="100%" stop-color="#31d4ff"/>
+            </linearGradient>
+            <linearGradient id="g2" x1="0" x2="1">
+              <stop offset="0%" stop-color="#b58cff"/>
+              <stop offset="100%" stop-color="#4f7cff"/>
+            </linearGradient>
+          </defs>
+          <g opacity=".22">
+            <rect x="35" y="40" width="490" height="280" rx="26" fill="#0f1d3e" stroke="#3a5c97"/>
+            <path d="M60 260 L140 170 L220 215 L300 120 L390 170 L500 95" fill="none" stroke="url(#g1)" stroke-width="4"/>
+            <rect x="68" y="76" width="130" height="70" rx="12" fill="#132650" stroke="#315090"/>
+            <rect x="214" y="76" width="120" height="70" rx="12" fill="#132650" stroke="#315090"/>
+            <rect x="350" y="76" width="140" height="70" rx="12" fill="#132650" stroke="#315090"/>
+          </g>
+          <g transform="translate(80,60)">
+            <polygon points="200,15 314,80 314,210 200,275 86,210 86,80" fill="#101f43" stroke="url(#g2)" stroke-width="4"/>
+            <g stroke="#4f7cff" stroke-width="2" opacity=".9">
+              <line x1="120" y1="92" x2="200" y2="55"/>
+              <line x1="200" y1="55" x2="280" y2="92"/>
+              <line x1="120" y1="92" x2="160" y2="170"/>
+              <line x1="200" y1="55" x2="200" y2="170"/>
+              <line x1="280" y1="92" x2="240" y2="170"/>
+              <line x1="160" y1="170" x2="200" y2="235"/>
+              <line x1="200" y1="170" x2="200" y2="235"/>
+              <line x1="240" y1="170" x2="200" y2="235"/>
+              <line x1="120" y1="92" x2="200" y2="170"/>
+              <line x1="280" y1="92" x2="200" y2="170"/>
+              <line x1="160" y1="170" x2="240" y2="170"/>
+            </g>
+            <g>
+              <circle cx="120" cy="92" r="18" fill="#e8eefc"/><text x="120" y="98" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">6</text>
+              <circle cx="200" cy="55" r="18" fill="#e8eefc"/><text x="200" y="61" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">14</text>
+              <circle cx="280" cy="92" r="18" fill="#e8eefc"/><text x="280" y="98" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">22</text>
+              <circle cx="160" cy="170" r="18" fill="#e8eefc"/><text x="160" y="176" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">31</text>
+              <circle cx="240" cy="170" r="18" fill="#e8eefc"/><text x="240" y="176" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">37</text>
+              <circle cx="200" cy="235" r="18" fill="#e8eefc"/><text x="200" y="241" text-anchor="middle" font-size="14" fill="#0b1730" font-weight="700">49</text>
+            </g>
+            <circle cx="200" cy="146" r="28" fill="#132650" stroke="#31d4ff" stroke-width="3"/>
+            <text x="200" y="154" text-anchor="middle" font-size="28" fill="#31d4ff" font-weight="700">Σ</text>
+            <g transform="translate(30,20)">
+              <circle cx="290" cy="70" r="38" fill="none" stroke="#31d4ff" opacity=".85"/>
+              <g fill="#31d4ff" font-size="10" font-weight="700">
+                <text x="290" y="36" text-anchor="middle">1</text>
+                <text x="312" y="44" text-anchor="middle">2</text>
+                <text x="325" y="62" text-anchor="middle">3</text>
+                <text x="325" y="84" text-anchor="middle">4</text>
+                <text x="312" y="102" text-anchor="middle">5</text>
+                <text x="290" y="110" text-anchor="middle">6</text>
+                <text x="268" y="102" text-anchor="middle">7</text>
+                <text x="255" y="84" text-anchor="middle">8</text>
+                <text x="255" y="62" text-anchor="middle">9</text>
+              </g>
+              <text x="290" y="75" text-anchor="middle" font-size="14" fill="#e8eefc" font-weight="700">DR9</text>
+            </g>
+            <g transform="translate(245,214)">
+              <rect x="0" y="0" width="110" height="34" rx="12" fill="#132650" stroke="#b58cff"/>
+              <text x="55" y="22" text-anchor="middle" font-size="14" fill="#e8eefc" font-weight="700">P2 · P3 · P5 · P7</text>
+            </g>
+          </g>
+        </svg>
+      </div>
+    </div>
+  </header>
+
+  <div class="layout">
+    <aside class="toc">
+      <h3>Contenido</h3>
+      <ol>
+        <li><a href="#virtudes">Virtudes principales</a></li>
+        <li><a href="#flujo">Flujo de uso recomendado</a></li>
+        <li><a href="#principal">Pestaña Principal</a></li>
+        <li><a href="#basico">Subpestaña Básico</a></li>
+        <li><a href="#lexico">Subpestaña Lexicográfico</a></li>
+        <li><a href="#reajuste">Reajuste / Bloques</a></li>
+        <li><a href="#parejas">Parejas internas / V8.5</a></li>
+        <li><a href="#naturales">Filtros naturales / DR9</a></li>
+        <li><a href="#excel">Hojas del informe Excel</a></li>
+        <li><a href="#hard">Cómo usar la versión HARD</a></li>
+        <li><a href="#resumen">Resumen final</a></li>
+      </ol>
+      <p class="small">Consejo: empieza con una configuración prudente y endurece por capas. No conviene activar todo en duro a la vez.</p>
+    </aside>
+
+    <main class="content">
+      <section id="virtudes">
+        <h2>✨ Virtudes principales de la V8.5</h2>
+        <div class="grid-3">
+          <div class="card">
+            <div class="kpi">3</div>
+            <h4>Hojas históricas</h4>
+            <p class="muted">Trabaja con <span class="tag blue">BONOLOTO</span>, <span class="tag blue">PRIMITIVA</span> y <span class="tag blue">BONOPRIMI</span>.</p>
+          </div>
+          <div class="card">
+            <div class="kpi">15</div>
+            <h4>Parejas internas</h4>
+            <p class="muted">Analiza las 15 parejas de una combinación de 6 números.</p>
+          </div>
+          <div class="card">
+            <div class="kpi">2</div>
+            <h4>Niveles de uso</h4>
+            <p class="muted">Puedes usar el sistema como <strong>score suave</strong> o con <strong>eliminación dura</strong> en la rama HARD.</p>
+          </div>
+        </div>
+
+        <div class="grid-2" style="margin-top:16px">
+          <div class="card">
+            <h4>Lo que aporta el analizador</h4>
+            <ul>
+              <li>Análisis posicional y estructural del histórico.</li>
+              <li>Generador de candidatas “parecidas” y “dispersas”.</li>
+              <li>Control lexicográfico del espacio combinatorio total <span class="code">C(49,6)</span>.</li>
+              <li>Índice de Reajuste Estructural con continuidad + reajuste.</li>
+              <li>Bloques Digitales 3+3.</li>
+              <li>Sumas de parejas internas + DR9 de sumas.</li>
+              <li>Firma estructural p-ádica V8.5.</li>
+              <li>Multiproceso CPU y barra de progreso ligera.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Qué no hace</h4>
+            <p>No garantiza predicción. Su valor real está en:</p>
+            <ul>
+              <li>comparar criterios,</li>
+              <li>reducir el espacio de búsqueda,</li>
+              <li>probar hipótesis,</li>
+              <li>y revisar resultados en Excel y backtesting.</li>
+            </ul>
+            <div class="callout tip">
+              La mejor filosofía de uso es <strong>analizar → puntuar → filtrar</strong>. Primero mira qué criterios parecen útiles; después decide si alguno merece entrar como filtro duro.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="flujo">
+        <h2>🧭 Flujo de uso recomendado</h2>
+        <div class="grid-4">
+          <div class="card"><h4>1. Carga el histórico</h4><p>Selecciona el Excel correcto. El informe se guarda en la misma carpeta que ese histórico.</p></div>
+          <div class="card"><h4>2. Elige hojas</h4><p>Marca BONOLOTO, PRIMITIVA y/o BONOPRIMI según lo que quieras estudiar.</p></div>
+          <div class="card"><h4>3. Empieza suave</h4><p>Usa el perfil <strong>Equilibrado</strong> y genera pocas candidatas.</p></div>
+          <div class="card"><h4>4. Revisa el Excel</h4><p>Mira sobre todo <strong>CAND_RESUMEN</strong>, <strong>CANDIDATAS</strong>, <strong>SUMAS_RESUMEN</strong> y <strong>FIRMA_PADICA_RES</strong>.</p></div>
+        </div>
+        <div class="callout warn">
+          Si usas la versión HARD, compara primero con la eliminación dura <strong>desactivada</strong>. Así sabrás si el módulo p-ádico aporta información útil o si está cerrando demasiado el pool.
+        </div>
+      </section>
+
+      <section id="principal">
+        <h2>🧩 Pestaña Principal</h2>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Campo</th><th>Qué hace</th><th>Rango / referencia</th><th>Efecto práctico</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Excel histórico</strong></td><td>Selecciona el archivo base.</td><td>—</td><td>El informe se guardará en la misma carpeta que ese Excel.</td></tr>
+              <tr><td><strong>Hojas</strong></td><td>Permite analizar BONOLOTO, PRIMITIVA y/o BONOPRIMI.</td><td>—</td><td>Cada hoja genera su propio bloque de informe.</td></tr>
+              <tr><td><strong>Total candidatas</strong></td><td>Número final de combinaciones a proponer.</td><td>Mínimo 1 · habituales 10, 20, 50, 100</td><td>Más candidatas = más amplitud, más tiempo y más ruido si no están bien filtradas.</td></tr>
+              <tr><td><strong>Parecidas</strong></td><td>Candidatas orientadas a continuidad histórica.</td><td>Práctico: parte del total</td><td>Más alto = más peso de la continuidad.</td></tr>
+              <tr><td><strong>Dispersas</strong></td><td>Candidatas orientadas a variedad.</td><td>Práctico: parte del total</td><td>Más alto = más diversidad arquitectónica.</td></tr>
+              <tr><td><strong>Simulaciones candidatas</strong></td><td>Intentos iniciales antes de seleccionar las finales.</td><td>El programa fuerza al menos <span class="code">(parecidas+dispersas) × 100</span></td><td>Más simulaciones = más oportunidades de encontrar buenas candidatas, pero mayor tiempo.</td></tr>
+              <tr><td><strong>Hacer backtesting</strong></td><td>Activa las pruebas retrospectivas.</td><td>Booleano</td><td>Tarda más, pero ayuda a validar si un criterio parece útil.</td></tr>
+              <tr><td><strong>Backtest últimos</strong></td><td>Sorteos finales usados en backtesting.</td><td>Recomendado: 200 a 500</td><td>Más alto = visión más estable, más tiempo.</td></tr>
+              <tr><td><strong>Backtest controles</strong></td><td>Aleatorias de control por sorteo.</td><td>Recomendado: 100 a 500</td><td>Más controles = comparación más fiable.</td></tr>
+              <tr><td><strong>Mínimo historial backtest</strong></td><td>Histórico mínimo previo para empezar a evaluar.</td><td>Mínimo 50 · recomendado 200+</td><td>Protege frente a backtests con muestra escasa.</td></tr>
+              <tr><td><strong>Exportar TXT automático</strong></td><td>Crea TXT con combinaciones en formato <span class="code">00,00,00,00,00,00</span>.</td><td>Booleano</td><td>Útil para jugar, exportar o comparar fuera del programa.</td></tr>
+              <tr><td><strong>Núcleos CPU</strong></td><td>Controla el paralelismo.</td><td><span class="code">0</span> automático · <span class="code">1</span> secuencial · <span class="code">2+</span> limitado</td><td><strong>1</strong> sirve para depurar; <strong>0</strong> suele ser la mejor opción general.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="basico">
+        <h2>⚙️ Subpestaña Básico</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Perfil rápido</h3>
+            <ul>
+              <li><strong>Equilibrado</strong>: punto de partida recomendado.</li>
+              <li><strong>Más parecido al histórico</strong>: aumenta continuidad; puede reducir diversidad.</li>
+              <li><strong>Más disperso</strong>: fuerza variedad; puede alejarse de la señal reciente.</li>
+              <li><strong>Más centrado lexicográficamente</strong>: suele usar percentiles centrales, por ejemplo 25-75.</li>
+              <li><strong>Más abierto lexicográficamente</strong>: reparte más por zonas y aumenta separación.</li>
+              <li><strong>Personalizado</strong>: no sobreescribe tus valores manuales.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Solapes y diversidad</h3>
+            <div class="table-wrap">
+              <table>
+                <thead><tr><th>Campo</th><th>Rango práctico</th><th>Defecto</th><th>Lectura</th></tr></thead>
+                <tbody>
+                  <tr><td>Máx. coincidencias con histórico</td><td>3 a 5</td><td>4</td><td>Bajo = más restricción. Alto = más continuidad.</td></tr>
+                  <tr><td>Máx. coincidencias entre parecidas</td><td>3 a 5</td><td>4</td><td>Bajo = más diversidad. Alto = tolera candidatas más parecidas.</td></tr>
+                  <tr><td>Máx. coincidencias dispersas</td><td>2 a 4</td><td>2</td><td><strong>2</strong> es exigente; <strong>3-4</strong> relaja la dispersión.</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="lexico">
+        <h2>📚 Subpestaña Lexicográfico</h2>
+        <p>El control lexicográfico ubica cada combinación dentro del espacio completo de combinaciones. Sirve para trabajar por zonas, percentiles y saltos.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h3>Qué puedes hacer aquí</h3>
+            <ul>
+              <li>Forzar zonas bajas, medias o altas.</li>
+              <li>Trabajar por rangos de percentil.</li>
+              <li>Evitar concentración de candidatas demasiado próximas.</li>
+              <li>Controlar el salto respecto a la última combinación histórica.</li>
+              <li>Repartir candidatas por zonas lexicográficas.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 360 170" class="mini-svg" aria-hidden="true">
+              <rect x="10" y="20" width="340" height="110" rx="16" fill="#102044" stroke="#315090"/>
+              <line x1="44" y1="75" x2="316" y2="75" stroke="#6288ff" stroke-width="4"/>
+              <line x1="95" y1="60" x2="95" y2="90" stroke="#31d4ff" stroke-width="4"/>
+              <line x1="180" y1="54" x2="180" y2="96" stroke="#7ee787" stroke-width="5"/>
+              <line x1="260" y1="60" x2="260" y2="90" stroke="#f9c74f" stroke-width="4"/>
+              <text x="44" y="114" fill="#cfe0ff" font-size="12">0%</text>
+              <text x="180" y="114" fill="#cfe0ff" font-size="12" text-anchor="middle">Zona media</text>
+              <text x="316" y="114" fill="#cfe0ff" font-size="12" text-anchor="end">100%</text>
+              <text x="180" y="36" fill="#e8eefc" font-size="15" text-anchor="middle" font-weight="700">Percentiles y zonas combinatorias</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango / opciones</th><th>Defecto</th><th>Cómo afecta</th></tr></thead>
+            <tbody>
+              <tr><td><strong>Modo</strong></td><td>Automático, todas las zonas, zona media, solo una zona, rango manual, reparto equilibrado, reparto manual</td><td>Según perfil</td><td>Decide si el lexicográfico actúa como orientación global o como filtro zonal.</td></tr>
+              <tr><td><strong>Peso lexicográfico %</strong></td><td>0 a 40</td><td>12</td><td><strong>0</strong> sin efecto; <strong>8-15</strong> suave/moderado; <strong>18-25</strong> fuerte; <strong>30-40</strong> muy dominante.</td></tr>
+              <tr><td><strong>Percentil mínimo / máximo</strong></td><td>0 a 100</td><td>—</td><td><strong>25-75</strong> centra la búsqueda; un rango estrecho filtra más; uno amplio deja libertad.</td></tr>
+              <tr><td><strong>Evitar concentración lexicográfica</strong></td><td>Booleano</td><td>Activo según perfil</td><td>Evita candidatas finales demasiado juntas por índice.</td></tr>
+              <tr><td><strong>Separación mínima</strong></td><td>Mín. 0 · práctico 100.000 a 600.000</td><td>—</td><td>Más separación = más diversidad, pero cuesta más completar candidatas.</td></tr>
+              <tr><td><strong>Tipo de salto</strong></td><td>Cualquier, bajo, medio, alto, extremo</td><td>Cualquier</td><td>Bajo/medio busca continuidad; alto/extremo busca ruptura.</td></tr>
+              <tr><td><strong>Salto manual</strong></td><td>Mínimo / máximo</td><td>—</td><td>Si el rango es estrecho, se vuelve filtro duro.</td></tr>
+              <tr><td><strong>Reparto por zonas</strong></td><td>Baja, baja-media, media, media-alta, alta</td><td>—</td><td>Sirve para construir un MIX final más equilibrado por regiones combinatorias.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="reajuste">
+        <h2>📈 Reajuste / Bloques</h2>
+        <h3>6.1 Índice de Reajuste Estructural</h3>
+        <p>Compara una <strong>ventana reciente</strong> con un <strong>histórico largo</strong>. Busca equilibrio entre lo que viene activo y lo que puede estar infrautilizado.</p>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango / opciones</th><th>Defecto</th><th>Lectura</th></tr></thead>
+            <tbody>
+              <tr><td>Modo</td><td>Mixto automático, mixto manual 60/40, solo continuidad, solo reajuste, personalizado</td><td>Mixto automático</td><td>Controla el equilibrio entre seguir la señal reciente o buscar recuperación estructural.</td></tr>
+              <tr><td>Peso continuidad</td><td>0 a 100</td><td>60</td><td>Más alto = prioriza lo que viene funcionando recientemente.</td></tr>
+              <tr><td>Peso reajuste</td><td>0 a 100</td><td>40</td><td>Más alto = busca recuperar familias poco representadas frente al largo plazo.</td></tr>
+              <tr><td>Ventana reciente</td><td>Mínimo 5</td><td>50</td><td>Menor = más sensibilidad. Mayor = más estabilidad.</td></tr>
+              <tr><td>Histórico largo</td><td>Mínimo 50</td><td>1000</td><td>Mayor = referencia más estable. Menor = adaptación más rápida.</td></tr>
+              <tr><td>Familias activables</td><td>Posiciones, DR9 por posición, grupos A, lexicográfico, distancias, suma, paridad, bajos/altos, bloques 3+3</td><td>Varias activas</td><td>Permite decidir qué submódulos entran dentro del cálculo de reajuste.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>6.2 Bloques Digitales 3+3</h3>
+        <div class="grid-2">
+          <div class="card">
+            <p>Analiza la raíz digital de:</p>
+            <ul>
+              <li><span class="code">P1+P2+P3</span> → bloque inicial</li>
+              <li><span class="code">P4+P5+P6</span> → bloque final</li>
+              <li>suma total de las 6 posiciones</li>
+              <li>relación bloque inicial / bloque final</li>
+            </ul>
+          </div>
+          <div class="card">
+            <svg viewBox="0 0 380 180" class="mini-svg" aria-hidden="true">
+              <rect x="12" y="40" width="150" height="92" rx="16" fill="#12254a" stroke="#31d4ff"/>
+              <rect x="218" y="40" width="150" height="92" rx="16" fill="#12254a" stroke="#7ee787"/>
+              <text x="87" y="74" text-anchor="middle" fill="#e8eefc" font-size="16" font-weight="700">Bloque inicial</text>
+              <text x="87" y="98" text-anchor="middle" fill="#31d4ff" font-size="22" font-weight="700">P1 + P2 + P3</text>
+              <text x="293" y="74" text-anchor="middle" fill="#e8eefc" font-size="16" font-weight="700">Bloque final</text>
+              <text x="293" y="98" text-anchor="middle" fill="#7ee787" font-size="22" font-weight="700">P4 + P5 + P6</text>
+              <line x1="162" y1="86" x2="218" y2="86" stroke="#f9c74f" stroke-width="4"/>
+              <text x="190" y="70" text-anchor="middle" fill="#f9c74f" font-size="16" font-weight="700">relación</text>
+            </svg>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Defecto</th><th>Efecto</th></tr></thead>
+            <tbody>
+              <tr><td>Top bloques inicial/final/total</td><td>Mínimo 1 · recomendado 2 a 5</td><td>3</td><td>Bajo = selectivo. Alto = flexible.</td></tr>
+              <tr><td>Top relaciones 3+3</td><td>Mínimo 1 · recomendado 3 a 10</td><td>5</td><td>Más relaciones = más variedad.</td></tr>
+              <tr><td>Mín. encajes de bloques</td><td>0 a 4</td><td>2</td><td><strong>0</strong> solo puntúa; <strong>2</strong> exige cierto encaje; <strong>4</strong> es duro.</td></tr>
+              <tr><td>Peso bloques</td><td>0 a 5</td><td>1</td><td><strong>0</strong> anula; <strong>0,5</strong> suave; <strong>1</strong> normal; <strong>2-3</strong> fuerte; <strong>5</strong> extremo.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>6.3 Candidatos por posición y DR9</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Defecto</th><th>Lectura</th></tr></thead>
+            <tbody>
+              <tr><td>Top números por posición</td><td>Mínimo 1 · recomendado 6 a 15</td><td>10</td><td>Menor = más selectivo; mayor = más flexible.</td></tr>
+              <tr><td>Mínimo posiciones reforzadas</td><td>0 a 3</td><td>—</td><td><strong>0</strong> score suave; <strong>2-3</strong> endurece bastante.</td></tr>
+              <tr><td>Top DR9 por posición</td><td>Mínimo 1 · recomendado 2 a 5</td><td>3</td><td><strong>Top 1</strong> es muy duro; <strong>top 3</strong> suele ser equilibrado.</td></tr>
+              <tr><td>Mínimo posiciones DR9 reforzadas</td><td>0 a 3</td><td>—</td><td><strong>0</strong> solo puntúa; <strong>2-3</strong> filtra bastante.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="parejas">
+        <h2>🔗 Parejas internas / V8.5</h2>
+
+        <h3>7.1 Sumas de parejas internas</h3>
+        <p>Cada combinación de 6 números produce <strong>15 parejas internas</strong>. Sobre esas parejas se estudian <strong>sumas exactas</strong>, <strong>rangos centrales</strong>, <strong>sumas ricas</strong> y <strong>DR9 de las sumas</strong>.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <h4>Qué aporta este módulo</h4>
+            <ul>
+              <li>Detecta si una combinación se apoya en sumas centrales o extremas.</li>
+              <li>Controla repeticiones raras de una misma suma.</li>
+              <li>Permite reforzar sumas ricas como <span class="code">49/50/51</span>.</li>
+              <li>Ofrece una lectura estructural muy útil para score o filtro.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h4>Idea clave</h4>
+            <p>No todas las sumas son igual de interesantes. Las sumas centrales generan más parejas posibles y suelen ser más útiles como criterio que las extremas.</p>
+            <div class="callout tip">
+              El valor recomendado de <strong>Máx. repetición misma suma = 2</strong> evita el caso raro de <strong>3 repeticiones</strong>, que es un patrón poco frecuente.
+            </div>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Defecto</th><th>Cómo afecta</th></tr></thead>
+            <tbody>
+              <tr><td>Usar sumas de parejas internas en el generador</td><td>Booleano</td><td>Activo</td><td>Permite que este módulo sume score.</td></tr>
+              <tr><td>Usar como filtro estricto</td><td>Booleano</td><td>Desactivado recomendado</td><td>Activado: descarta candidatas si no cumple los límites.</td></tr>
+              <tr><td>Peso</td><td>0 a 5</td><td>1</td><td><strong>0</strong> sin efecto; <strong>0,5</strong> suave; <strong>1</strong> normal; <strong>2-3</strong> fuerte; <strong>5</strong> extremo.</td></tr>
+              <tr><td>Top sumas</td><td>Mínimo 3 · recomendado 8 a 20</td><td>12</td><td>Bajo = concentra el criterio; alto = lo flexibiliza.</td></tr>
+              <tr><td>40-60 mín./máx.</td><td>0 a 15</td><td>—</td><td>Subir el mínimo centra más la combinación en el rango central fuerte.</td></tr>
+              <tr><td>35-65 mín./máx.</td><td>0 a 15</td><td>—</td><td>Rango central más amplio y más flexible.</td></tr>
+              <tr><td>Máx. repetición misma suma</td><td>Mín. 1 · máximo natural 3</td><td>2</td><td><strong>1</strong> muy duro; <strong>2</strong> recomendado; <strong>3</strong> permite rarezas.</td></tr>
+              <tr><td>Exigir 49/50/51</td><td>Booleano</td><td>Opcional</td><td>Puede cerrar bastante el pool.</td></tr>
+              <tr><td>Mín. 49/50/51</td><td>0 a 15 · recomendado 0 a 2</td><td>—</td><td><strong>1</strong> exige al menos una suma rica; <strong>2</strong> es más fuerte.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>7.2 DR9 de las sumas</h3>
+        <div class="callout">
+          <strong>Diferencia importante:</strong> la <strong>suma exacta</strong> es un criterio fuerte; el <strong>DR9 de la suma</strong> es un criterio de equilibrio o concentración digital.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Defecto</th><th>Cómo afecta</th></tr></thead>
+            <tbody>
+              <tr><td>Añadir capa DR9 de las sumas</td><td>Booleano</td><td>Activo</td><td>Calcula la raíz digital de cada una de las 15 sumas.</td></tr>
+              <tr><td>Penalizar concentración DR9</td><td>Booleano</td><td>Activo</td><td>Resta score si demasiadas sumas caen en una misma raíz digital.</td></tr>
+              <tr><td>Top DR9 sumas</td><td>1 a 9</td><td>4</td><td><strong>1-2</strong> muy selectivo; <strong>4</strong> equilibrado; <strong>9</strong> casi no prioriza.</td></tr>
+              <tr><td>Máx. repetición DR9 suma</td><td>Mínimo 1 · recomendado 4 a 7</td><td>4</td><td><strong>4</strong> exigente; <strong>5-6</strong> más flexible.</td></tr>
+              <tr><td>Mín. DR9 distintos</td><td>1 a 9</td><td>5</td><td><strong>5</strong> busca diversidad moderada; <strong>6-7</strong> endurece.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>7.3 Firma estructural p-ádica V8.5</h3>
+        <p>La firma p-ádica convierte la combinación en una <strong>etiqueta estructural</strong>. Después compara cuántas veces aparece esa firma en el <strong>histórico ganador</strong> y cuántas veces aparece en el <strong>pool superviviente actual</strong>.</p>
+
+        <div class="grid-3">
+          <div class="card">
+            <h4>Firma enriquecida</h4>
+            <p>La firma aparece proporcionalmente más en el histórico que en el pool actual.</p>
+            <span class="tag green">Tiende a protegerse</span>
+          </div>
+          <div class="card">
+            <h4>Firma inflada</h4>
+            <p>La firma aparece demasiado en el pool actual y poco en el histórico.</p>
+            <span class="tag orange">Tiende a penalizarse</span>
+          </div>
+          <div class="card">
+            <h4>Muestra escasa</h4>
+            <p>Si hay pocas repeticiones, la confianza baja y conviene ser prudente.</p>
+            <span class="tag purple">Interpretación con cuidado</span>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:16px">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango / formato</th><th>Defecto</th><th>Interpretación</th></tr></thead>
+            <tbody>
+              <tr><td>Usar firma p-ádica como score suave</td><td>Booleano</td><td>Activo</td><td>Activa el cálculo de firma y su score.</td></tr>
+              <tr><td>Proteger firmas enriquecidas</td><td>Booleano</td><td>Activo</td><td>Premia firmas con mejor presencia relativa en histórico.</td></tr>
+              <tr><td>Penalizar firmas infladas</td><td>Booleano</td><td>Activo</td><td>Penaliza firmas sobrecargadas en el pool actual.</td></tr>
+              <tr><td>Base</td><td>Distancias / Sumas / Mixta</td><td>Mixta</td><td><strong>Mixta</strong> es más completa pero también más específica y puede reducir la confianza si hay pocas repeticiones.</td></tr>
+              <tr><td><strong>Peso</strong></td><td>0 a 5</td><td>0,65</td><td><strong>0</strong> sin efecto; <strong>0,25-0,75</strong> suave; <strong>1</strong> normal; <strong>2</strong> fuerte; <strong>3-5</strong> muy dominante. <strong>0,65</strong> es prudente: influye sin mandar sobre todo el generador.</td></tr>
+              <tr><td>Primos</td><td>Formato recomendado: <span class="code">2,3,5,7</span></td><td>2,3,5,7</td><td>Pocos primos = firmas más generales y con más muestra. Muchos primos = firmas más finas, pero menos repetidas y con menor confianza.</td></tr>
+              <tr><td>Ventana</td><td>Mínimo 5</td><td>50</td><td>Menor = más sensible; mayor = más estable.</td></tr>
+              <tr><td>Histórico largo</td><td>Mínimo 50</td><td>1000</td><td>Mayor = más estabilidad; menor = más adaptación.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>7.4 Eliminación dura por firma p-ádica</h3>
+        <div class="callout danger">
+          La rama HARD puede <strong>descartar candidatas</strong> si la firma está inflada y hay confianza suficiente. Conviene activarla solo después de mirar primero la lectura suave.
+        </div>
+
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Defecto</th><th>Extremos y efecto</th></tr></thead>
+            <tbody>
+              <tr><td>Activar eliminación dura por firma inflada</td><td>Booleano</td><td>Activable</td><td>Desactivado = solo puntúa. Activado = puede eliminar candidatas.</td></tr>
+              <tr><td><strong>Mín. enriquecimiento</strong></td><td>Mínimo admitido 0,01</td><td>0,75</td><td><strong>1,00</strong> ≈ equilibrio. <strong>&lt;1,00</strong> = firma más presente en pool que en histórico. <strong>0,50</strong> muy permisivo; <strong>0,75</strong> moderado; <strong>0,95</strong> agresivo; <strong>1,10</strong> muy agresivo.</td></tr>
+              <tr><td><strong>Confianza mín.</strong></td><td>0 a 100</td><td>35</td><td><strong>0-20</strong> agresivo; <strong>30-45</strong> moderado; <strong>60-80</strong> prudente.</td></tr>
+              <tr><td><strong>Score mín.</strong></td><td>0 a 100</td><td>42</td><td><strong>35-40</strong> permisivo; <strong>42-45</strong> moderado; <strong>55+</strong> duro.</td></tr>
+              <tr><td><strong>Retener pool mín. %</strong></td><td>0 a 100</td><td>35</td><td>Evita que el filtro vacíe demasiado el pool. <strong>0</strong> deja eliminar mucho; <strong>35</strong> conserva una base mínima; <strong>50-70</strong> es más seguro.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="grid-3" style="margin-top:16px">
+          <div class="card">
+            <h4>Dureza suave</h4>
+            <p><strong>Mín. enriquecimiento:</strong> 0,60 · <strong>Confianza:</strong> 20 · <strong>Score:</strong> 38 · <strong>Retención:</strong> 25%</p>
+          </div>
+          <div class="card">
+            <h4>Dureza moderada</h4>
+            <p><strong>Mín. enriquecimiento:</strong> 0,75 · <strong>Confianza:</strong> 35 · <strong>Score:</strong> 42 · <strong>Retención:</strong> 35%</p>
+          </div>
+          <div class="card">
+            <h4>Dureza alta</h4>
+            <p><strong>Mín. enriquecimiento:</strong> 0,95 · <strong>Confianza:</strong> 50 · <strong>Score:</strong> 50 · <strong>Retención:</strong> 50%</p>
+          </div>
+        </div>
+      </section>
+
+      <section id="naturales">
+        <h2>🧮 Filtros naturales / DR9</h2>
+
+        <h3>8.1 Estructura natural</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Referencia práctica</th><th>Cómo afecta</th></tr></thead>
+            <tbody>
+              <tr><td>Filtrar suma</td><td>Suma total de los 6 números</td><td>Posible 21 a 279 · práctico 90 a 210</td><td>Controla si la combinación cae en una franja total concreta.</td></tr>
+              <tr><td>Filtrar pares</td><td>0 a 6</td><td>Práctico 2 a 4</td><td>Si mínimo y máximo son 3, exiges exactamente 3 pares.</td></tr>
+              <tr><td>Filtrar bajos/altos</td><td>Bajos 1-24: 0 a 6</td><td>Práctico 2 a 4</td><td>Sirve para controlar el equilibrio de zona numérica.</td></tr>
+              <tr><td>Máximo por decena</td><td>1 a 6</td><td>Práctico 2 o 3</td><td>Evita concentrar demasiados números en una sola decena.</td></tr>
+              <tr><td>Control consecutivos</td><td>Booleano</td><td>—</td><td>Activa la vigilancia sobre rachas consecutivas.</td></tr>
+              <tr><td>Permitir consecutivos</td><td>Booleano</td><td>—</td><td>Si se desactiva, elimina cualquier consecutivo.</td></tr>
+              <tr><td>Racha máx.</td><td>1 a 6</td><td>Práctico 2 o 3</td><td><strong>1</strong> equivale a no permitir consecutivos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>8.2 DR9 y grupos A1/A2/A3</h3>
+        <div class="grid-2">
+          <div class="card">
+            <h4>Grupos A</h4>
+            <ul>
+              <li><strong>A1</strong>: DR9 1, 4, 7</li>
+              <li><strong>A2</strong>: DR9 2, 5, 8</li>
+              <li><strong>A3</strong>: DR9 3, 6, 9</li>
+            </ul>
+            <p>Puedes fijar mínimo y máximo de presencia de cada grupo en los 6 números.</p>
+          </div>
+          <div class="card">
+            <h4>Control DR9 general</h4>
+            <ul>
+              <li><strong>Raíces distintas mín.</strong>: práctico 4 a 6.</li>
+              <li><strong>Repetición máx.</strong>: práctico 2 o 3.</li>
+              <li><strong>Repetición 1</strong>: exige todas distintas.</li>
+            </ul>
+          </div>
+        </div>
+
+        <h3>8.3 Distancias consecutivas</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Campo</th><th>Rango</th><th>Práctico</th><th>Cómo afecta</th></tr></thead>
+            <tbody>
+              <tr><td>Usar control de distancias</td><td>Booleano</td><td>—</td><td>Activa límites sobre las 5 distancias consecutivas.</td></tr>
+              <tr><td>Distancia mín.</td><td>1 a 48</td><td>1 a 4</td><td>Subirla evita números demasiado pegados.</td></tr>
+              <tr><td>Distancia máx.</td><td>1 a 48</td><td>18 a 30</td><td>Bajarla evita huecos excesivos.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="excel">
+        <h2>📄 Hojas del informe Excel</h2>
+        <div class="grid-3">
+          <div class="card"><h4>Lectura general</h4><p><strong>RESUMEN</strong>, <strong>CONCLUSION</strong></p></div>
+          <div class="card"><h4>Estructura histórica</h4><p><strong>POSICIONES</strong>, <strong>DISTANCIAS</strong>, <strong>PAREJAS</strong>, <strong>VENTANAS</strong>, <strong>SALIDA</strong>, <strong>LEXICO</strong>, <strong>REAJUSTE</strong></p></div>
+          <div class="card"><h4>Módulos avanzados</h4><p><strong>CAND_POS</strong>, <strong>DR9_POS</strong>, <strong>BLOQUES_DR9</strong>, <strong>BLOQUES_RESUMEN</strong></p></div>
+          <div class="card"><h4>Sumas internas</h4><p><strong>PAREJAS_SUMAS</strong>, <strong>SUMAS_RESUMEN</strong>, <strong>SUMAS_VENTANAS</strong></p></div>
+          <div class="card"><h4>Firma p-ádica</h4><p><strong>FIRMA_PADICA</strong>, <strong>FIRMA_PADICA_RES</strong>, <strong>FIRMA_PADICA_VENT</strong></p></div>
+          <div class="card"><h4>Generador y backtesting</h4><p><strong>CAND_RESUMEN</strong>, <strong>CANDIDATAS</strong>, <strong>BT_RESUMEN</strong>, <strong>BT_FAMILIAS</strong>, <strong>BT_DETALLE</strong></p></div>
+        </div>
+        <div class="callout tip">
+          Si quieres entender rápido qué ha pasado, revisa en este orden:
+          <strong>RESUMEN → CAND_RESUMEN → CANDIDATAS → SUMAS_RESUMEN → FIRMA_PADICA_RES → CONCLUSION</strong>.
+        </div>
+      </section>
+
+      <section id="hard">
+        <h2>🛡️ Cómo probar la versión HARD</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Secuencia recomendada</h3>
+            <ol>
+              <li>Ejecuta primero con eliminación dura desactivada.</li>
+              <li>Revisa las firmas infladas en el Excel.</li>
+              <li>Activa HARD con valores moderados.</li>
+              <li>Mira en <strong>CAND_RESUMEN</strong> cuántas candidatas elimina.</li>
+              <li>Si elimina demasiado, sube <strong>Retener pool mín. %</strong> o <strong>Confianza mín.</strong>.</li>
+              <li>Si elimina muy poco, sube <strong>Mín. enriquecimiento</strong> o <strong>Score mín.</strong>.</li>
+            </ol>
+          </div>
+          <div class="card">
+            <h3>Errores típicos</h3>
+            <ul>
+              <li>Endurecer a la vez firma p-ádica, sumas internas y filtros naturales.</li>
+              <li>Subir demasiado el peso de varios módulos a la vez.</li>
+              <li>Usar una muestra pequeña y creer demasiado en una firma con poca confianza.</li>
+              <li>Confundir “score útil” con “filtro duro útil”.</li>
+            </ul>
+            <div class="callout warn">
+              Una firma puede parecer interesante en score suave y aun así no ser buena candidata a filtro duro. La validación real está en el Excel y en el backtesting.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="resumen">
+        <h2>🏁 Resumen final</h2>
+        <div class="grid-2">
+          <div class="card">
+            <h3>Dos niveles de trabajo</h3>
+            <ul>
+              <li><strong>Score suave</strong>: recomendable para estudiar y comparar.</li>
+              <li><strong>Eliminación dura</strong>: útil solo cuando una firma está inflada con confianza suficiente.</li>
+            </ul>
+          </div>
+          <div class="card">
+            <h3>Filosofía recomendada</h3>
+            <p>La forma más sensata de usar la V8.5 HARD es por capas:</p>
+            <p><span class="tag cyan">primero analizar</span> → <span class="tag blue">después puntuar</span> → <span class="tag red">y solo al final filtrar</span>.</p>
+          </div>
+        </div>
+        <div class="callout tip">
+          Si una opción te parece demasiado dura, lo habitual no es que “esté mal”, sino que quizá aún no toque usarla como filtro. Muchas veces merece más la pena dejarla como score suave y observar cómo se comporta en varias corridas.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <div class="footer">
+    Manual ilustrado generado para el proyecto <strong>Analizador Dinámico 6/49 V8.5 HARD</strong>.
+    HTML autónomo, pensado para abrirse localmente en cualquier navegador moderno.
+  </div>
+</div>
+</body>
+</html>
